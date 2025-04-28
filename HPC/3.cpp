@@ -1,3 +1,5 @@
+// g++ -fopenmp 1.cpp -o 1 
+
 #include <iostream>
 #include <omp.h>
 #include <ctime>

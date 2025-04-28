@@ -1,5 +1,3 @@
-// run code command:  g++-14 -fopenmp 1.cpp -o 1 
-//                    ./1  
 // inputs 
 /*
 5
