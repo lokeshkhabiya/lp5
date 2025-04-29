@@ -19,6 +19,41 @@ void bubbleSort(int arr[], int n)
     }
 }
 
+void parallelBubbleSort(int arr[], int n) {
+    bool isSorted = false;
+    int phase; // To track iterations, though not strictly needed for correctness here
+
+    for (phase = 0; !isSorted; ++phase) {
+        isSorted = true; // Assume sorted until a swap occurs
+
+        // Odd phase: Compare/swap elements at odd indices (1, 3, 5, ...)
+        #pragma omp parallel for default(none) shared(arr, n, isSorted)
+        for (int i = 1; i < n - 1; i += 2) {
+            if (arr[i] > arr[i + 1]) {
+                std::swap(arr[i], arr[i + 1]);
+                #pragma omp critical // Only one thread modifies isSorted at a time
+                {
+                    isSorted = false;
+                }
+            }
+        }
+
+        // Even phase: Compare/swap elements at even indices (0, 2, 4, ...)
+        #pragma omp parallel for default(none) shared(arr, n, isSorted)
+        for (int i = 0; i < n - 1; i += 2) {
+            if (arr[i] > arr[i + 1]) {
+                std::swap(arr[i], arr[i + 1]);
+                 #pragma omp critical // Only one thread modifies isSorted at a time
+                 {
+                    isSorted = false;
+                 }
+            }
+        }
+        // The outer loop continues until a full pass (odd + even phase)
+        // completes without any swaps.
+    }
+}
+
 void merge(int arr[], int l, int m, int r)
 {
     int i, j, k;
@@ -117,29 +152,17 @@ int main()
         arr[i] = rand() % 100;
     }
 
-    // cout << "Original array: ";
-    // printArray(arr, n);
-
     // Sequential Bubble Sort
     clock_t start = clock();
     bubbleSort(arr, n);
     clock_t end = clock();
 
-    // cout << "Sequential Bubble Sorted array: ";
-    // printArray(arr, n);
-
     double sequentialBubbleTime = double(end - start) / CLOCKS_PER_SEC;
 
     // Parallel Bubble Sort
     start = clock();
-    #pragma omp parallel
-    {
-        bubbleSort(arr, n);
-    }
+    parallelBubbleSort(arr, n);
     end = clock();
-
-    // cout << "Parallel Bubble Sorted array: ";
-    // printArray(arr, n);
 
     double parallelBubbleTime = double(end - start) / CLOCKS_PER_SEC;
 
@@ -147,9 +170,6 @@ int main()
     start = clock();
     mergeSort(arr, 0, n - 1);
     end = clock();
-
-    // cout << "Sequential Merge Sorted array: ";
-    // printArray(arr, n);
 
     double sequentialMergeTime = double(end - start) / CLOCKS_PER_SEC;
 
@@ -163,9 +183,6 @@ int main()
         }
     }
     end = clock();
-
-    // cout << "Parallel Merge Sorted array: ";
-    // printArray(arr, n);
 
     double parallelMergeTime = double(end - start) / CLOCKS_PER_SEC;
 
